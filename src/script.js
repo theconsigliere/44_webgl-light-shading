@@ -79,31 +79,171 @@ renderer.setPixelRatio(sizes.pixelRatio)
  * Material
  */
 const config = {
-  color: "#ffffff",
-  intensity: 0.2,
+  ambientColor: "#ffffff",
+  ambientIntensity: 0.0,
+  directionalLightPosition: new THREE.Vector3(0, 0, 3),
+  dirLightColour: "#554fab",
+  pointLightPosition: new THREE.Vector3(0, 3, 0),
+  pointLightColour: "#f25050",
+  pointLightDecay: 0.25,
 }
 
 const material = new THREE.ShaderMaterial({
   vertexShader: shadingVertexShader,
   fragmentShader: shadingFragmentShader,
   uniforms: {
-    uColor: new THREE.Uniform(new THREE.Color(config.color)),
-    uIntensity: new THREE.Uniform(config.intensity),
+    uColor: new THREE.Uniform(new THREE.Color(config.ambientColor)),
+    uIntensity: new THREE.Uniform(config.ambientIntensity),
+    uDirLightPosition: new THREE.Uniform(config.directionalLightPosition),
+    uDirLightColour: new THREE.Uniform(new THREE.Color(config.dirLightColour)),
+    uPointLightPosition: new THREE.Uniform(config.pointLightPosition),
+    uPointLightColour: new THREE.Uniform(
+      new THREE.Color(config.pointLightColour)
+    ),
+    uPointLightDecay: new THREE.Uniform(config.pointLightDecay),
   },
 })
 
-gui.addColor(config, "color").onChange(() => {
-  material.uniforms.uColor.value.set(config.color)
+const AmbientFolder = gui.addFolder("Ambient Light")
+
+AmbientFolder.addColor(config, "ambientColor").onChange(() => {
+  material.uniforms.uColor.value.set(config.ambientColor)
 })
 
-gui
-  .add(config, "intensity")
+AmbientFolder.add(config, "ambientIntensity")
   .min(0)
   .max(1)
   .step(0.01)
   .onChange(() => {
-    material.uniforms.uIntensity.value = config.intensity
+    material.uniforms.uIntensity.value = config.ambientIntensity
   })
+
+const dirLightFolder = gui.addFolder("Directional Light")
+
+dirLightFolder
+  .addColor(config, "dirLightColour")
+  .name("Colour")
+  .onChange(() => {
+    material.uniforms.uDirLightColour.value.set(config.dirLightColour)
+    directionalLightHelper.material.color.set(config.dirLightColour)
+  })
+
+dirLightFolder
+  .add(config.directionalLightPosition, "x")
+  .min(-10)
+  .max(10)
+  .step(0.01)
+  .name("x")
+  .onChange(() => {
+    material.uniforms.uDirLightPosition.value.x =
+      config.directionalLightPosition.x
+    directionalLightHelper.position.x = config.directionalLightPosition.x
+  }).add
+
+dirLightFolder
+  .add(config.directionalLightPosition, "y")
+  .min(-10)
+  .max(10)
+  .step(0.01)
+  .name("y")
+  .onChange(() => {
+    material.uniforms.uDirLightPosition.value.y =
+      config.directionalLightPosition.y
+    directionalLightHelper.position.y = config.directionalLightPosition.y
+  })
+
+dirLightFolder
+  .add(config.directionalLightPosition, "z")
+  .min(-10)
+  .max(10)
+  .step(0.01)
+  .name("z")
+  .onChange(() => {
+    material.uniforms.uDirLightPosition.value.z =
+      config.directionalLightPosition.z
+    directionalLightHelper.position.z = config.directionalLightPosition.z
+  })
+
+const PointFolder = gui.addFolder("Point Light")
+
+PointFolder.addColor(config, "pointLightColour")
+  .name("Colour")
+  .onChange(() => {
+    material.uniforms.uPointLightColour.value.set(config.pointLightColour)
+    pointLightHelper.material.color.set(config.pointLightColour)
+  })
+
+PointFolder.add(config.pointLightPosition, "x")
+  .min(-10)
+  .max(10)
+  .step(0.01)
+  .name("x")
+  .onChange(() => {
+    material.uniforms.uPointLightPosition.value.x = config.pointLightPosition.x
+    pointLightHelper.position.x = config.pointLightPosition.x
+  })
+
+PointFolder.add(config.pointLightPosition, "y")
+  .min(-10)
+  .max(10)
+  .step(0.01)
+  .name("y")
+  .onChange(() => {
+    material.uniforms.uPointLightPosition.value.y = config.pointLightPosition.y
+    pointLightHelper.position.y = config.pointLightPosition.y
+  })
+
+PointFolder.add(config.pointLightPosition, "z")
+  .min(-10)
+  .max(10)
+  .step(0.01)
+  .name("z")
+  .onChange(() => {
+    material.uniforms.uPointLightPosition.value.z = config.pointLightPosition.z
+    pointLightHelper.position.z = config.pointLightPosition.z
+  })
+
+PointFolder.add(config, "pointLightDecay")
+  .min(0)
+  .max(1)
+  .step(0.01)
+  .name("Decay")
+  .onChange(() => {
+    material.uniforms.uPointLightDecay.value = config.pointLightDecay
+  })
+
+/**
+ * Light helpers
+ */
+const directionalLightHelper = new THREE.Mesh(
+  new THREE.PlaneGeometry(),
+  new THREE.MeshBasicMaterial()
+)
+
+directionalLightHelper.material.color = new THREE.Color(config.dirLightColour)
+directionalLightHelper.material.side = THREE.DoubleSide
+directionalLightHelper.position.set(
+  config.directionalLightPosition.x,
+  config.directionalLightPosition.y,
+  config.directionalLightPosition.z
+)
+
+scene.add(directionalLightHelper)
+
+const pointLightHelper = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(0.1, 2),
+  new THREE.MeshBasicMaterial()
+)
+
+pointLightHelper.material.color = new THREE.Color(config.pointLightColour)
+pointLightHelper.material.side = THREE.DoubleSide
+pointLightHelper.position.set(
+  config.pointLightPosition.x,
+  config.pointLightPosition.y,
+  config.pointLightPosition.z
+)
+
+scene.add(pointLightHelper)
 
 /**
  * Objects
@@ -142,7 +282,6 @@ gltfLoader.load("./mxk-logo.glb", (gltf) => {
   mxkLogo = gltf.scene
 
   mxkLogo.traverse((child) => {
-    console.log(child)
     if (child.isMesh) child.material = material
   })
 
